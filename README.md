@@ -6,9 +6,9 @@ Análisis de expresión diferencial de genes relacionados con la obesidad median
 |---|---|---|
 | Persona 1 | Montar un repositorio de GitHub para subir todo allí. | Hecho |
 | Persona 1 | Organizar los ficheros en GitHub. | Hecho |
-| Persona 1 | Realizar el **control de calidad de los FASTQ**. | En proceso |
-| Persona 1 | Justificar si es necesario filtrado/preprocesamiento. | En proceso |
-| Persona 1 | Preparar los resultados gráficos, tablas, figuras y texto resumen del control de calidad para añadir al póster. | En proceso |
+| Persona 1 | Realizar el **control de calidad de los FASTQ**. | Hecho |
+| Persona 1 | Justificar si es necesario filtrado/preprocesamiento. | Hecho |
+| Persona 1 | Preparar los resultados gráficos, tablas, figuras y texto resumen del control de calidad para añadir al póster. | Hecho |
 | Persona 2 | Realizar el **pseudoalineamiento con Salmon**. | No |
 | Persona 2 | Obtener una matriz de conteos por gen y muestra. | No |
 | Persona 2 | Preparar los resultados gráficos, tablas, figuras y texto resumen del pseudoalineamiento para añadir al póster. | No |
