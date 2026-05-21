@@ -1,7 +1,7 @@
 Se realizó el control de calidad de los archivos FASTQ utilizando FastQC y posteriormente se agruparon todos los resultados con MultiQC para realizar la interpretación conjunta de las muestras.
 
 # 1. Duplicados
-El porcentaje de secuencias duplicadas en todos los FASTQ es muy bajo, entre 0.2% y 0.7%. Esto indica que casi todas las lecturas son únicas, la librería tiene mucha diversidad y no parece haber sobreamplificación por PCR.
+El porcentaje de secuencias duplicadas en todos los FASTQ es muy bajo, entre 0.2% y 0.8%. Esto indica que casi todas las lecturas son únicas, la librería tiene mucha diversidad y no parece haber sobreamplificación por PCR.
 
 # 2. Contenido GC
 El porcentaje de GC es muy homogéneo entre todas las muestras, aprox. 45-46%. No se observan diferencias importantes entre librerías, lo que indica consistencia entre muestras.
@@ -16,9 +16,9 @@ Todas las muestras tienen valores de calidad por base entre Q35 y Q37, es decir,
 No se observan desviaciones importantes ni patrones extraños en la composición de bases de las lecturas. En todas las muestras, las proporciones de las bases se mantienen relativamente equilibradas, entre el 23% y el 27%. Los perfiles encajan con datos normales de RNA-seq.
 
 # 6. Per Sequence GC Content
-En este apartado aparecen 6 warnings y 6 fails. Esto ocurre porque FastQC espera una distribución normal típica de ADN genómico. Sin embargo, en RNA-seq la distribución depende de los genes expresados, algunos transcritos son mucho más abundantes que otros, por lo que es habitual que la distribución observada no siga una distribución normal.
+En este apartado aparecen 5 warnings y 5 fails. Esto ocurre porque FastQC espera una distribución normal típica de ADN genómico. Sin embargo, en RNA-seq la distribución depende de los genes expresados, algunos transcritos son mucho más abundantes que otros, por lo que es habitual que la distribución observada no siga una distribución normal.
 
-Lo importante es que todas las curvas son muy similares entre muestras, no aparecen picos extraños y las distribuciones están centradas aproximadamente entre 45% y 50% GC, por lo que parece una variabilidad biológica normal de RNA-seq y no un problema de contaminación.
+Lo importante es que todas las curvas son muy similares entre muestras, no aparecen picos extraños y las distribuciones están centradas aproximadamente entre 40% y 45% GC, por lo que parece una variabilidad biológica normal de RNA-seq y no un problema de contaminación.
 
 # 7. Bases indeterminadas
 El porcentaje de bases indeterminadas (N) es 0% en todas las muestras. Esto indica ausencia de posiciones ambiguas en las lecturas.
@@ -30,10 +30,10 @@ Todas las muestras presentan lecturas de longitud única de 151 bp.
 La gran mayoría de las secuencias aparecen una sola vez, confirmando muy baja duplicación.
 
 # 10. Overrepresented Sequences
-Se encuentran algunas secuencias sobrerrepresentadas, pero con porcentajes muy bajos (0.01-0.08%). Las secuencias más frecuentes tienen 2 o 4 ocurrencias. Excepto una secuencia rica en adeninas con 14 ocurrencias, probablemente corresponde a colas poly-A de transcritos. No parece existir contaminación relevante.
+Se encuentran algunas secuencias sobrerrepresentadas, pero con porcentajes muy bajos (0.01-0.03%). Las secuencias más frecuentes tienen 2 o 4 ocurrencias. Excepto una secuencia rica en adeninas con 20 ocurrencias, probablemente corresponde a colas poly-A de transcritos. No parece existir contaminación relevante.
 
 # 11. Adapter Content
-El contenido de adaptadores es menor al 1% en todas las muestras, esto indica ausencia de contaminación significativa por adaptadores.
+El contenido de adaptadores es menor al 2% en todas las muestras, esto indica ausencia de contaminación significativa por adaptadores.
 
 # Conclusión
 En conjunto, los resultados del control de calidad indican que todas las muestras tienen una calidad de secuenciación muy alta y homogénea entre todas las librerías. Las lecturas mantienen valores Phred muy altos y estables en toda la secuencia. Además no se observa contaminación significativa por adaptadores ni presencia de bases indeterminadas
