@@ -1,0 +1,11 @@
+{
+    "salmon_version": "1.11.4",
+    "index": "reference/salmon_index",
+    "libType": "A",
+    "mates1": "data/raw_fastq/MaggieSimpson_R1.fastq.gz",
+    "mates2": "data/raw_fastq/MaggieSimpson_R2.fastq.gz",
+    "validateMappings": [],
+    "threads": "4",
+    "output": "results/salmon/MaggieSimpson",
+    "auxDir": "aux_info"
+}
