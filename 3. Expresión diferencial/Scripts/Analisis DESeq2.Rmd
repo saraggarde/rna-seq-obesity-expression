@@ -1,0 +1,161 @@
+---
+title: "ANALISIS DESEQ2"
+author: "Pablo Carballo Lope"
+date: "2026-05-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+# Analisis de expresion diferencial con DESeq2
+
+
+# ------------------------------------------------------------------
+
+
+# No hay normalizacion
+
+
+La normalizacion no es necesaria porque DESeq2 incluye un paso de normalizacion intrínseca. Se podria comparar con EdgeR para ver si se obtienen los mismos resultados. Para el análisis se utilizaron conteos crudos importados desde Salmon mediante tximport.
+# ------------------------------------------------------------------
+
+
+# Librerias
+
+# ------------------------------------------------------------------
+
+
+```{r}
+library(BiocManager)
+BiocManager::install("DESeq2")
+BiocManager::install("tximport")
+BiocManager::install("EnhancedVolcano")
+library(DESeq2)
+library(tximport)
+library(EnhancedVolcano)
+library(pheatmap)
+```
+# ------------------------------------------------------------------
+# Cargamos la matriz de conteo
+```{r}
+counts <- list.files(path = "Personajes",pattern = "quant.sf",recursive = TRUE,full.names = TRUE
+)
+head(counts)
+```
+# ------------------------------------------------------------------
+# Poner nombres correctos
+```{r}
+names(counts) <- c( "AbrahamSimpson","BartSimpson","HomerSimpson","LisaSimpson","MaggieSimpson"
+)
+counts
+```
+# ------------------------------------------------------------------
+# Importamos de Salmon
+```{r}
+importado <- tximport(counts,type = "salmon", txOut = TRUE)
+head(importado$counts)
+counts_matrix <- importado$counts
+datos <- round(counts_matrix)
+head(counts_matrix)
+```
+# ------------------------------------------------------------------
+# Creamos el metadata
+```{r}
+metadata <- data.frame(
+  row.names = c("AbrahamSimpson","BartSimpson","HomerSimpson","LisaSimpson","MaggieSimpson"),
+  grupo = c("Obeso","Normopeso","Obeso","Normopeso","Normopeso")
+)
+metadata
+```
+# ------------------------------------------------------------------
+# Analisis DESeq2
+# ------------------------------------------------------------------
+# Creacion del objeto DESeqDataSet con el count y el metadata
+```{r}
+dds <- DESeqDataSetFromMatrix(datos, colData=metadata, design=~grupo)
+```
+# ------------------------------------------------------------------
+# Ejecutamos DESeq2
+```{r}
+dds <- DESeq(dds)
+```
+# ------------------------------------------------------------------
+# Resultados
+```{r}
+res <- results(dds,contrast = c("grupo", "Obeso", "Normopeso"),alpha = 0.05)
+head(res)
+summary(res)
+```
+# ------------------------------------------------------------------
+# Guardo la tabla con los resultados
+```{r}
+write.csv(as.data.frame(res),"DESeq2_results.csv")
+```
+# ------------------------------------------------------------------
+# Creo un dataframe
+```{r}
+res_df <- as.data.frame(res)
+write.csv(res_df,"res_df.csv",row.names = FALSE) #Exportar la tabla de genes
+res_df$GeneID <- rownames(res_df)
+head(res_df)
+```
+# ------------------------------------------------------------------
+
+
+# Representacion Volcano Plot
+```{r}
+EnhancedVolcano(res_df, lab=res_df$GeneID, x='log2FoldChange', y='pvalue', labSize = 3, axisLabSize = 10)
+```
+
+
+Los genes en la parte superior son los que mayor significancia estadistica tienen. Los de la parte derecha sobrexpresados en obesos y los de la derecha en normopesos. Los puntos rojos son los de mayor importancia.
+
+
+# ------------------------------------------------------------------
+
+# Representacion MA plot
+
+
+```{r}
+plotMA(res) # Representacion MA plot
+```
+
+La mayoria de los genes no representan diferencias significativas (cercanos a 0), a excepcion de los extremos (puntos azules). Los positivos representan los obesos y los negativos los normopesos.
+
+
+# ------------------------------------------------------------------
+
+# Genes representativos 
+# Ordenar por significancia ajustada
+```{r}
+res_ordered <- res_df[order(res_df$padj), ]
+```
+
+
+# Seleccionar los 10 genes más significativos
+```{r}
+top15_genes <- head(res_ordered, 15)
+top15_genes
+# Heatmap
+vsd <- varianceStabilizingTransformation(dds, blind = FALSE) 
+mat <- assay(vsd)[(rownames(res)), ] 
+mat_scaled <- t(scale(t(mat))) 
+mat_subset <- mat_scaled[(head(order(res$padj), 15)), ]
+pheatmap(mat_subset,
+         cluster_rows = TRUE,
+         cluster_cols = TRUE,
+         annotation_col = as.data.frame(colData(dds)),
+         show_rownames = TRUE,
+         show_colnames = TRUE,
+         color = colorRampPalette(c("blue", "white", "red"))(50))
+
+```
+
+
+Para el heatmap he usado los 15 genes mas representativos (pero se podra hacer con todos). Los rojos son los que tienen una mayor expresión y los azules mas oscuros los que menos. Se observan genes que se expresan en obesos que no se observan apenas en normopesos y viceversa.
