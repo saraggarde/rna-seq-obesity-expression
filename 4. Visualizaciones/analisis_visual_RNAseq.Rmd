@@ -1,0 +1,147 @@
+---
+title: "plots"
+author: "Víctor Pérez Amores"
+date: "2026-05-23"
+output: html_document
+---
+
+## Análisis de expresión diferencial de transcritos entre muestras Obeso 1 y Normopeso mediante RNA-seq
+
+En este análisis visual de los resultados de expresión diferencial obtenidos a partir de datos de RNA-seq, se comparan las muestras del grupo Obeso 1 frente al grupo Normopeso. Se presentan un volcano plot y un heatmap generados a partir de los resultados de DESeq2 y la matriz TPM de Salmon.
+
+```{r librerias, message=FALSE, warning=FALSE}
+# Importación de las librerías
+library(ggplot2)
+library(pheatmap)
+library(EnhancedVolcano)
+```
+
+## Procesamiento de los resultados del analisis de expresión diferencial (DESeq2)
+
+Antes de generar los gráficos, se procesan los resultados de DESeq2 para añadir el gen asociado a cada transcrito y eliminar valores NA. De esta forma, la tabla final contiene la información necesaria para representar correctamente el cambio de expresión y la significación ajustada.
+
+```{r procesamiento_deseq2, message=FALSE, warning=FALSE}
+# Importación de los datos DESeq2.
+res_dest_crudo <- read.csv("DESeq2_results.csv", row.names = 1, check.names = FALSE)
+
+# Guardar los nombres de las filas, que corresponden a los IDs de transcrito, como una columna llamada "transcrito". Esto permite unir esta tabla con la tabla transcrito-gen.
+res_dest_crudo$transcrito <- rownames(res_dest_crudo)
+
+# Cargar la tabla que relaciona cada transcrito con su gen correspondiente. Como el archivo no tiene cabecera, se indica header = FALSE. Y asignación de nombres a los encabezados de las dos columnas de la tabla: una para el ID del transcrito y otra para el nombre del gen.
+trans_gene <- read.delim("Transcrito_a_Gen.tsv", header = FALSE, sep = "\t", stringsAsFactors = FALSE, check.names = FALSE)
+colnames(trans_gene) <- c("transcrito", "gen")
+
+# Unión de los resultados de DESeq2 con la tabla transcrito-gen usando la columna común "transcrito". Con esto obtenemos una tabla que incluye, para cada transcrito, sus resultados de expresión diferencial y el gen al que pertenece.
+res_desg_crudo <- merge(res_dest_crudo, trans_gene, by = "transcrito")
+
+# Eliminación de los transcritos que tienen valor NA en padj y/o log2FoldChange.
+res_desg_sin_NA <- res_desg_crudo[!is.na(res_desg_crudo$padj) & !is.na(res_desg_crudo$log2FoldChange), ]
+
+# Mostrar las primeras filas de la tabla final procesada.
+head(res_desg_sin_NA)
+```
+
+## Volcano Plot
+
+A partir de la tabla procesada se genera un volcano plot para representar el cambio de expresión y la significación ajustada de cada transcrito.
+
+```{r volcano_plot, fig.width=9, fig.height=7, message=FALSE, warning=FALSE}
+# Cada punto representa un transcrito.
+volcano_transcritos <- EnhancedVolcano(
+  res_desg_sin_NA,
+  lab = res_desg_sin_NA$gen, # Indicación de qué etiquetas se mostraran : el gen asociado a cada transcrito.
+  x = "log2FoldChange", # Definir el eje X como el cambio de expresión entre grupos.
+  y = "padj",  # Definir el eje Y como la significación ajustada.
+  pCutoff = 0.05, # Definir el umbral de significación ajustada.
+  FCcutoff = 1, # Definir el umbral mínimo de cambio de expresión.
+  title = "Volcano plot de transcritos",
+  xlab = "log2 Fold Change",
+  ylab = "-log10(pvalue ajustado)",
+  legendLabels = c("No significativo","ED dentro del umbral","-","ED dentro del umbral y significativa"),
+  legendLabSize = 8,
+  legendIconSize = 3,
+  axisLabSize = 12,
+  titleLabSize = 16,
+  subtitleLabSize = 14,
+  captionLabSize = 10,
+  pointSize = 0.5,
+  labSize = 3
+)
+
+volcano_transcritos
+```
+
+#### Interpretación del Volcano PLot
+
+El volcano plot resume el cambio de expresión, representado como log2FoldChange, y la significación estadística, representada como -log10(padj). Como se puede observar, la mayoría de los transcritos se agrupan cerca de valores bajos de -log10(padj), lo que representa que no son resultados significativos. Por otro lado, se ven varios transcritos con cambios amplios de expresión, tanto hacia valores negativos como positivos de log2FoldChange. Entre los puntos más destacados aparecen LEP y PCSK1, con un nivel de significación alto y valores de log2FoldChange alejados del cero. Lo que indica que possen un cambio de expresión entre grupos muy marcado. Concretamente, en la zona izquierda se localizan LEP/NM_000230.3 y PCSK1/NM_000439.5, con valores de log2FoldChange de -7,95 y -7,67 respectivamente y valores de padj de 5,2e-4 y 6,7e-3, respectivamente, lo que los asocia a menor expresión relativa en Obeso 1 frente a Normopeso. Y por otro lado, PCSK1/NM_001177875.2 aparece en la zona derecha, con un valor log2FoldChange de 8,47 y un padj de 5,3e-4, lo que lo asocia a mayor expresión relativa en Obeso 1. También se observan transcritos con valores altos de log2FoldChange, pero sin una significación ajustada elevada.
+
+## Heatmap
+
+Antes de generar el heatmap, se procesa la matriz TPM para comparar la expresión relativa entre muestras. Para ello, se asigna cada muestra a su grupo, se transforma la matriz y se seleccionan los 20 transcritos con menor padj.
+
+```{r procesamiento_heatmap, message=FALSE, warning=FALSE}
+# Importación de la matriz de expresión TPM.
+mat_tpm <- read.csv("gene_tpm_salmon.csv", row.names = 1, check.names = FALSE)
+
+# Comprobar los nombres de las muestras presentes en la matriz con colnames(mat_tpm). Y en base a ello crear una tabla con el grupo experimental de cada muestra. El orden debe coincidir con el orden de las columnas de la matriz TPM.
+col_grupo <- data.frame( Grupo = c("Obeso 1", "Obeso 1", "Normopeso", "Normopeso", "Normopeso"))
+
+# Asignar como nombres de fila de la tabla de grupos los nombres de las muestras de la matriz TPM.
+rownames(col_grupo) <- colnames(mat_tpm)
+
+# Transformar los valores TPM usando log2(TPM + 1). Esto reduce el efecto de valores extremos y evita problemas con valores cero.
+mat_log <- log2(mat_tpm + 1)
+
+# Escalar la matriz por filas. Esto permite comparar la expresión relativa de cada transcrito entre las muestras.
+mat_scaled <- t(scale(t(mat_log)))
+
+# Definir cuántos transcritos se van a representar en el heatmap. Y ordenar los transcritos según su valor de padj de menor a mayor. Así se priorizan los transcritos con mayor significación ajustada.
+n_top <- 20
+orden_transcritos <- res_desg_sin_NA[order(res_desg_sin_NA$padj),]
+top_transcritos <- head(orden_transcritos, n_top) # Selección los 20 transcritos con menor padj.
+
+# Extraer los genes asociados a los transcritos seleccionados. Y extraer de la matriz escalada solo las filas correspondientes a los genes seleccionados.
+top_genes <- top_transcritos$gen
+mat_top_scaled <- mat_scaled[top_genes,] 
+
+# Mostrar los 20 transcritos seleccionados para el heatmap y la tabla final procesada.
+top_transcritos
+mat_top_scaled
+```
+
+Una vez preparada la matriz escalada con los 20 transcritos seleccionados, se genera el heatmap. Este gráfico permite comparar visualmente la expresión relativa de cada transcrito entre las muestras y añadir la anotación del grupo experimental.
+
+```{r heatmap, fig.width=9, fig.height=7, message=FALSE, warning=FALSE}
+heatmap <- pheatmap(
+  mat_top_scaled,
+  annotation_col = col_grupo, # Añadir la anotación de grupo en las muestras.
+  annotation_colors = list(Grupo = c("Normopeso"="#F2E8CF", "Obeso 1"="#BC4749")),  # Color de cada grupo
+  color = colorRampPalette(c("#08306B", "#4292C6", "#FFFFBF", "#FEE08B", "#D73027"))(100),  # Escala de colores para representar la expresión.
+  clustering_distance_rows = "euclidean", # Distancia euclídea para agrupar los transcritos según su patrón de expresión.
+  clustering_distance_cols = "euclidean",  # Y distancia euclídea para agrupar las muestras según su patrón de expresión.
+  clustering_method = "complete", # Usar agrupamiento jerárquico completo para construir los dendrogramas.
+  labels_row = paste0(top_transcritos$gen," (", top_transcritos$transcrito,")"), # Etiquetar filas con nombre del gen y ID del transcrito.
+  show_rownames = TRUE,
+  show_colnames = TRUE,
+  fontsize_row = 7,
+  fontsize_col = 9,
+  main = "Heatmap de top 20 genes"
+)
+
+heatmap
+```
+
+#### Interpretación del Heatmap
+
+El heatmap representa la expresión relativa de los 20 transcritos seleccionados en las muestras de los grupos: Obeso 1 y Normopeso, a partir de la matriz TPM. A diferencia del Volcano plot, este muestra la distribución de la expresión de cada transcrito entre muestras. En general, se observan diferencias de expresión entre grupos. Por ejemplo, igual que en el anterior gráfico, aparecen transcritos de LEP y PCSK1 que muestran diferencias visibles entre las muestras Obeso 1 y Normopeso. Sin embargo, los hay que no muestran una separación clara por grupo. Por ejemplo, PDE3B/NM_001363570.2 y PPARG/NM_001330615.4 presentan una expresión moderada en algunas muestras de ambos grupos, sin seguir un patrón. De forma similar, MRAP2/NM_001346543.2 muestra una mayor expresión en Maggie Simpson del grupo Normopeso, mientras que en el resto de muestras la expresión se mantiene en niveles más bajos.
+
+## Conclusión de la interpretación de gráficos
+
+El análisis muestra que la diferencia entre Obeso 1 y Normopeso no es igual para todos los transcritos. Algunos presentan una separación clara entre grupos, mientras que otros muestran una expresión más variable entre las muestras individuales.
+
+
+
+
+
+
+
