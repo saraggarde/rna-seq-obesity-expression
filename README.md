@@ -163,7 +163,7 @@ Los resultados sugieren posibles alteraciones en:
 | Persona 4 | Preparar la tabla de expresión por gen/personaje. | Hecho |
 | Persona 4 | Adaptar todos los gráficos para el póster. | Hecho |
 | Persona 4 | Redactar un texto de análisis de los resultados de los gráficos. | Hecho |
-| Persona 5 | Realizar la **interpretación biológica**. | Hecho |
+| Persona 5 | Realizar la interpretación biológica final, unificando todos los resultados. | Hecho |
 | Persona 5 | Montar el póster con todos los gráficos, tablas y resultados proporcionados por el resto del grupo. | Hecho |
 
 # Autores
