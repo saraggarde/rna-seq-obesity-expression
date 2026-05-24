@@ -168,7 +168,7 @@ Los resultados sugieren posibles alteraciones en:
 
 # Autores
 
-- Pablo Carballo López
+- Pablo Carballo Lope
 - Sara Guillén Garde
 - Vicente Llorente Úbeda
 - Víctor Pérez Amores
